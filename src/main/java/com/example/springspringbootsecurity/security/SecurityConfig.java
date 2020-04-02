@@ -12,6 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -27,8 +29,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .antMatchers("/","index","/css/*","/js/*")
-                .permitAll()
+                .antMatchers("/","index","/css/*","/js/*").permitAll()
+                .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -47,8 +49,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         UserDetails annaSmithUser =  User.builder()
                                         .username("annasmith")
                                         .password(passwordEncoder.encode("password"))
-                                        .roles("STUDENT") // ROLE_STUDENT
+                                        .roles(STUDENT.name())
                                         .build();
-        return new InMemoryUserDetailsManager(annaSmithUser);
+
+            UserDetails lindaUser = User.builder()
+                                        .username("linda")
+                                        .password(passwordEncoder.encode("password1234"))
+                                        .roles(ADMIN.name())
+                                        .build();
+        return new InMemoryUserDetailsManager(
+                annaSmithUser,
+                lindaUser
+        );
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import static com.example.springspringbootsecurity.security.ApplicationPermissions.*;
 import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
@@ -36,14 +37,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable()
+//              .csrf().disable() отключение защиты. Отключение генерации и запроса csrf токена
+                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // генерация csrf токена. Защита активна. При каждом POST,PUT,DELETE запросах, необходимо будет передать в заголовке csrf токен.
+                .and()
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access
-//                .antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission()) // на основе разрешений(permissions), а не ролей(roles). Доступ имеет лишь тот, у кого есть разрашение писать.
-//                .antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.PUT,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(ADMIN.name(),ADMINTRAINEE.name())// все остальное, для обоих возможно. Тут ограничение по роли.
                 .anyRequest()
                 .authenticated()
                 .and()

@@ -14,6 +14,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable()  // отключение защиты. Отключение генерации и запроса csrf токена. ЛИШЬ ДЛЯ ускорения процесса запросов
+                .csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access
@@ -52,7 +54,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .rememberMe()
                             .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(2)) // хранить 2 суток. Хранение будет в im-memory базе данных. Не для настоящего проекта.
-                            .key("somethingVerySecured");
+                            .key("somethingVerySecured")
+                .and()
+                .logout() // кастомизируем выход из приложения
+                            .logoutUrl("/logout")
+                            .logoutRequestMatcher(new AntPathRequestMatcher("/logout","GET")) // если .csrf().disable() мы должны вставить данную строку. Это плохая практика. В проекте, вспользовать csrf()
+                            .clearAuthentication(true)
+                            .invalidateHttpSession(true)
+                            .deleteCookies("JSESSIONID","remember-me")
+                            .logoutSuccessUrl("/login");
     }
 
     /*

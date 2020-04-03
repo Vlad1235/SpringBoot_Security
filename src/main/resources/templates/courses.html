@@ -1,2 +1,6 @@
 <h1>Courses </h1>
 <p>SpringBoot Security</p>
+<!-- Добавляем кнопку logout. Запомнить, что при использовании csrf выходить из системы также нужно использовав POST-->
+    <form class="form-signin" method="get" action="/logout">
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Logout</button>
+    </form>

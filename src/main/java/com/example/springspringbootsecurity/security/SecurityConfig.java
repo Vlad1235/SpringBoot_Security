@@ -3,23 +3,18 @@ package com.example.springspringbootsecurity.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.example.springspringbootsecurity.security.ApplicationPermissions.*;
 import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
 
 @Configuration
@@ -28,10 +23,13 @@ import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationUserService applicationUserService;
 
     @Autowired
-    public SecurityConfig(PasswordEncoder passwordEncoder) {
+    public SecurityConfig(PasswordEncoder passwordEncoder,
+                          ApplicationUserService applicationUserService) {
         this.passwordEncoder = passwordEncoder;
+        this.applicationUserService = applicationUserService;
     }
 
     /*
@@ -68,39 +66,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                             .logoutSuccessUrl("/login");
     }
 
-    /*
-    Данный метод позволяет, создать hardcoded пользователей и как одна из возможных реализаций интерфейса UserDetailsService
-    вытаскивать данные из in-memory базы данных для сравнения с приходящим запросом на аутентификацию.
-    Создаем список пользователей. Которые будут хранится в in-memory базе данных.
-     */
     @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
+
     @Bean
-    protected UserDetailsService userDetailsService() {
-        UserDetails annaSmithUser =  User.builder()
-                                        .username("annasmith")
-                                        .password(passwordEncoder.encode("password"))
-//                                        .roles(STUDENT.name()) // авторизация на основе роли
-                                        .authorities(STUDENT.grantedAuthorities()) // авторизация на основе разрешений(permissions)
-                                        .build();
-
-            UserDetails lindaUser = User.builder()
-                                        .username("linda")
-                                        .password(passwordEncoder.encode("password1234"))
-//                                        .roles(ADMIN.name()) // авторизация на основе роли
-                                        .authorities(ADMIN.grantedAuthorities()) // авторизация на основе разрешений(permissions)
-                                        .build();
-
-            UserDetails tomUser = User.builder()
-                                        .username("tom")
-                                        .password(passwordEncoder.encode("1234"))
-//                                        .roles(ADMINTRAINEE.name()) // авторизация на основе роли
-                                        .authorities(ADMINTRAINEE.grantedAuthorities()) // авторизация на основе разрешений(permissions)
-                                        .build();
-
-        return new InMemoryUserDetailsManager(
-                annaSmithUser,
-                lindaUser,
-                tomUser
-        );
+    public DaoAuthenticationProvider daoAuthenticationProvider(){
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+        return provider;
     }
 }

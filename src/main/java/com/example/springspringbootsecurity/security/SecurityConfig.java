@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.example.springspringbootsecurity.security.ApplicationPermissions.*;
 import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
 
@@ -46,7 +48,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .formLogin() // Более не используется стандартная форма браузера. Теперь будет создаваться SESSIONID и клиента при каждом зарпосе в Cookies отправяемых серверу будет вкладывать его. Не нужно будет проходить аутентификацию.
                 .loginPage("/login").permitAll() // подключаем свою страницу с кастомизированной формой и выносим ее из под Spring Security
-                .defaultSuccessUrl("/courses",true); // по умолчанию, после успешной аутентификации клиент перенаправляется на index.html. Мы указываем куда хотим чтобы перенаправлялся он.
+                .defaultSuccessUrl("/courses",true) // по умолчанию, после успешной аутентификации клиент перенаправляется на index.html. Мы указываем куда хотим чтобы перенаправлялся он.
+                .and()
+                .rememberMe()
+                            .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(2)) // хранить 2 суток. Хранение будет в im-memory базе данных. Не для настоящего проекта.
+                            .key("somethingVerySecured");
     }
 
     /*

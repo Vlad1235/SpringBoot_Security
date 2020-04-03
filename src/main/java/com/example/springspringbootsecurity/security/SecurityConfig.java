@@ -37,17 +37,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-//              .csrf().disable() отключение защиты. Отключение генерации и запроса csrf токена
-                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // генерация csrf токена. Защита активна. При каждом POST,PUT,DELETE запросах, необходимо будет передать в заголовке csrf токен.
-                .and()
+                .csrf().disable()  // отключение защиты. Отключение генерации и запроса csrf токена. ЛИШЬ ДЛЯ ускорения процесса запросов
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access
                 .anyRequest()
                 .authenticated()
                 .and()
-                .httpBasic();
-
+//                .httpBasic(); // использование Basic auth. Форма браузера
+                .formLogin(); // Более не используется стандартная форма браузера. Теперь будет создаваться SESSIONID и клиента при каждом зарпосе в Cookies отправяемых серверу будет вкладывать его. Не нужно будет проходить аутентификацию.
     }
 
     /*

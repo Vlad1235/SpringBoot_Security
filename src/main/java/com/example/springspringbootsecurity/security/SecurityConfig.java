@@ -1,5 +1,6 @@
 package com.example.springspringbootsecurity.security;
 
+import com.example.springspringbootsecurity.jwt.JwtRecievingTokenVerifier;
 import com.example.springspringbootsecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -45,7 +46,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // так как jwt использует stateless состояние. То есть не требуется использование сохранения в базах данных, ни в in-memory типе ни в других типах.
                 .and()
-                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager())) // фильтр
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager())) // фильтр, создающий токен
+                .addFilterAfter(new JwtRecievingTokenVerifier(),JwtUsernameAndPasswordAuthenticationFilter.class) // фильтр, который идет после первого фильтра и проверяет поступающие в запросах клиентов токены
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access

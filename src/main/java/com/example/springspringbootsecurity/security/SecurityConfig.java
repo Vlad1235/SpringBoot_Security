@@ -1,5 +1,6 @@
 package com.example.springspringbootsecurity.security;
 
+import com.example.springspringbootsecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -40,30 +42,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
+                .sessionManagement()
+                                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // так как jwt использует stateless состояние. То есть не требуется использование сохранения в базах данных, ни в in-memory типе ни в других типах.
+                .and()
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager())) // фильтр
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access
                 .anyRequest()
-                .authenticated()
-                .and()
-                .formLogin() // Более не используется стандартная форма браузера. Теперь будет создаваться SESSIONID и клиента при каждом зарпосе в Cookies отправяемых серверу будет вкладывать его. Не нужно будет проходить аутентификацию.
-                            .loginPage("/login").permitAll() // подключаем свою страницу с кастомизированной формой и выносим ее из под Spring Security
-                            .defaultSuccessUrl("/courses",true) // по умолчанию, после успешной аутентификации клиент перенаправляется на index.html. Мы указываем куда хотим чтобы перенаправлялся он.
-                            .passwordParameter("coolpassword") // сам назвал
-                            .usernameParameter("coolusername") // сам назвал
-                .and()
-                .rememberMe()
-                            .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(2)) // хранить 2 суток. Хранение будет в im-memory базе данных. Не для настоящего проекта.
-                            .key("somethingVerySecured")
-                            .rememberMeParameter("longer-remember-me") // сам назвал
-                .and()
-                .logout() // кастомизируем выход из приложения
-                            .logoutUrl("/logout")
-                            .logoutRequestMatcher(new AntPathRequestMatcher("/logout","GET")) // если .csrf().disable() мы должны вставить данную строку. Это плохая практика. В проекте, вспользовать csrf()
-                            .clearAuthentication(true)
-                            .invalidateHttpSession(true)
-                            .deleteCookies("JSESSIONID","remember-me")
-                            .logoutSuccessUrl("/login");
+                .authenticated();
     }
 
     @Override

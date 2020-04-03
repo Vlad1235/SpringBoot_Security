@@ -27,6 +27,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!--Решение проблемы spring boot configuration annotation processor not configured-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+		</dependency>
 		<!--Избавление от часто встречающихся шаблонов кода-->
 		<dependency>
 			<groupId>com.google.guava</groupId>

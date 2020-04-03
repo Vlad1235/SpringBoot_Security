@@ -1,11 +1,11 @@
 package com.example.springspringbootsecurity.security;
 
+import com.example.springspringbootsecurity.jwt.JwtConfig;
 import com.example.springspringbootsecurity.jwt.JwtRecievingTokenVerifier;
 import com.example.springspringbootsecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -14,9 +14,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import java.util.concurrent.TimeUnit;
+import javax.crypto.SecretKey;
 
 import static com.example.springspringbootsecurity.security.ApplicationRoles.*;
 
@@ -27,12 +26,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationUserService applicationUserService;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
 
     @Autowired
     public SecurityConfig(PasswordEncoder passwordEncoder,
-                          ApplicationUserService applicationUserService) {
+                          ApplicationUserService applicationUserService,
+                          SecretKey secretKey,
+                          JwtConfig jwtConfig) {
         this.passwordEncoder = passwordEncoder;
         this.applicationUserService = applicationUserService;
+        this.secretKey = secretKey;
+        this.jwtConfig = jwtConfig;
     }
 
     /*
@@ -46,8 +51,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // так как jwt использует stateless состояние. То есть не требуется использование сохранения в базах данных, ни в in-memory типе ни в других типах.
                 .and()
-                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager())) // фильтр, создающий токен
-                .addFilterAfter(new JwtRecievingTokenVerifier(),JwtUsernameAndPasswordAuthenticationFilter.class) // фильтр, который идет после первого фильтра и проверяет поступающие в запросах клиентов токены
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey)) // фильтр, создающий токен
+                .addFilterAfter(new JwtRecievingTokenVerifier(secretKey, jwtConfig),JwtUsernameAndPasswordAuthenticationFilter.class) // фильтр, который идет после первого фильтра и проверяет поступающие в запросах клиентов токены
                 .authorizeRequests()
                 .antMatchers("/","index","/css/*","/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // from this API and deeper only users with Role STUDENT can access

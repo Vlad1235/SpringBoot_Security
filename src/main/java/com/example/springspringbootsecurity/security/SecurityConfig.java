@@ -45,7 +45,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticated()
                 .and()
                 .formLogin() // Более не используется стандартная форма браузера. Теперь будет создаваться SESSIONID и клиента при каждом зарпосе в Cookies отправяемых серверу будет вкладывать его. Не нужно будет проходить аутентификацию.
-                .loginPage("/login").permitAll(); // подключаем свою страницу с кастомизированной формой и выносим ее из под Spring Security
+                .loginPage("/login").permitAll() // подключаем свою страницу с кастомизированной формой и выносим ее из под Spring Security
+                .defaultSuccessUrl("/courses",true); // по умолчанию, после успешной аутентификации клиент перенаправляется на index.html. Мы указываем куда хотим чтобы перенаправлялся он.
     }
 
     /*
